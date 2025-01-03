@@ -1,8 +1,16 @@
 ---
-title: "PEC 4: PCA con R"
+title: 'PEC 4: PCA con R'
 author: "José Manuel Alés Granados"
-output: html_document
+date: "2025-01-02"
+output:
+  pdf_document:
+    latex_engine: xelatex
+  html_document: default
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # Instalar y cargar el paquete dplyr si no está instalado
@@ -15,6 +23,10 @@ library(ggplot2)
 
 if (!require(fields)) install.packages("fields")
 library(fields)
+
+if (!require(reticulate)) install.packages("reticulate")
+library(reticulate)
+use_condaenv("/home/bkrnds/anaconda3/envs/data_science", required = TRUE)
 ```
 
 ## Enunciado de la práctica PEC3 de la asignatura de Álgebra Lineal de la UOC
@@ -50,20 +62,27 @@ la práctica. Recordar, también, que debéis indicar los valores utilizados al
 inicio de la memoria, ası́ como el intento de la Tabla correspondiente (primero o
 segundo).
 
-La práctica se corresponde con el *primer intento* y tiene como *T* y *E* los 
+La práctica se corresponde con el *segundo intento* y tiene como *T* y *E* los 
 siguientes valores:
 
-T = 1
-E = 70
+```{r}
+# Valores práctica
+intento = "2º intento"
+T = 2
+E = 80
+cat(paste("La práctica se corresponde con el ", intento, ", con los valores de T = ", 
+          T, " y E = ", E))
+```
 
 ### Paso 1:
 Primeramente, leer el fichero de datos correspondiente al perı́odo 2006-2008.
 ` > data _ df <- read . csv ( ’/ home / data _ 0608. csv ’)`
 De la tabla resultante, guardar la primera columna (*weather label* ) al vector 
-y y las otras columnas a la matriz de caracterı́sticas X. Responder:
+*y* y las otras columnas a la matriz de caracterı́sticas *X*. Responder:
 ¿qué dimensión tiene la matriz X?
 
 ```{r}
+# Lectura del fichero
 data_df <- read.csv('datasets/data_0608.csv')
 y <- data_df %>%
   select(weather_label)
@@ -72,11 +91,9 @@ X <- data_df %>%
   select(-weather_label)
 
 dimensiones_X <- dim(X)
-print(paste("La Matriz X tiene ", dimensiones_X[1], " filas y ", 
+cat(paste("La Matriz X tiene ", dimensiones_X[1], " filas y ", 
             dimensiones_X[2], "columnas"))
 ```
-
-la **matriz X** tiene dimensión $1096 \times 7$
 
 ### Paso 2
 Antes de realizar cualquier tipo de análisis, es importante hacer una 
@@ -85,18 +102,16 @@ propósito, observar el número de dı́as con tiempo T y calcular su temperatur
 media (sólo de los dı́as correspondientes a T)
 
 ```{r}
-# Condición del intento 1
-T <- 1
 dias_T <- data_df %>%
   filter(weather_label == T)
 
-# Número de días con T == 1
+# Número de días con T == 2
 num_dias_T <- nrow(dias_T)
-print(paste("El numero de días con tiempo T = ", T, " es ", num_dias_T))
+cat(paste("El número de días con tiempo T = ", T, " es ", num_dias_T , "\n"))
 
-# Cálculo de la temperatura de los días con T == 1
+# Cálculo de la temperatura de los días con T == 2
 temp_media_T <- mean(dias_T$temperature)
-print(paste("La temperatura media de los días con T = ", T, " es ", temp_media_T))
+cat(paste("La temperatura media de los días con T = ", T, " es ", round(temp_media_T, 2)))
 ```
 
 ### Paso 3
@@ -120,13 +135,15 @@ Xs <- sweep(Xs, 2, s_X, "/")
 temperatura_media_Xs <- mean(Xs[["temperature"]])
 
 # Mostramos los resultados
-print("--Media de cada columna--")
-print(m_X)
-print("--Desviación típica de cada columna--")
-print(s_X)
-print(paste("La temperatura media de la matriz normalizada es ", 
+cat("--Media de cada columna--\n")
+cat(m_X)
+cat("\n--Desviación típica de cada columna--\n")
+cat(s_X)
+cat(paste("\nLa temperatura media de la matriz normalizada es : ", 
             temperatura_media_Xs))
 ```
+
+La temperatura media de los datos normalizados es 0.00.
 
 ### Paso 4
 Para ver la relación cruzada entre las distintas variables, observar la matriz 
@@ -159,9 +176,14 @@ max_asoc <- which.max(visibility_asoc)
 min_asoc <- which.min(visibility_asoc)
 
 # Mostramos las variables más y menos asociadas
-print(paste("La variable más asociada con la visibilidad es ", colnames_[max_asoc]))
-print(paste("La variable menos asociada con la visibilidad es ", colnames_[min_asoc]))
+cat(paste("La variable más asociada con la visibilidad es ", colnames_[max_asoc]))
+cat(paste("La variable menos asociada con la visibilidad es ", colnames_[min_asoc]))
 ```
+
+#### Respuesta 4:
+- La variable más asociada a la visibilidad (en valor absoluto y sin ser ella misma) es **humidity**.
+
+- La variable menos asociada a la visibilidad (en valor absoluto) es **atm_pres**.
 
 ### Paso 5
 Seguidamente, calcular la descomposición en componentes principales de la matriz 
@@ -197,13 +219,10 @@ varianza_df <- data.frame(
 )
 
 # Gráfica de la varianza acumulada
-plot(varianza_acumulada, type="b", pch=19, xlab="Número de componentes", 
-     ylab="Varianza Acumulada", main="Distribución de la Varianza Acumulada")
-
 ggplot(varianza_df, aes(x = NComponente, y = VarianzaAcumulada)) +
   geom_line(color="blue", linewidth=1) +
   geom_point(color="black", size=1.5) +
-  geom_hline(yintercept = 0.7, linetype="dashed", color="red") +
+  geom_hline(yintercept = 0.8, linetype="dashed", color="red") +
   labs (
     title = "Gráfica de la Varianza Acumulada",
     x = "Número de componentes",
@@ -211,6 +230,11 @@ ggplot(varianza_df, aes(x = NComponente, y = VarianzaAcumulada)) +
   ) +
   theme_minimal()
 ```
+
+#### Respuesta 5:
+
+Observando el gráfico podemos comprobar que nececesitamos al menos **4 componentes**
+para explicar el 80% de los datos
 
 ### Paso 6
 Con el tiempo, se os encarga un nuevo estudio, ahora durante el perı́odo
@@ -232,27 +256,21 @@ y2 <- data2_df %>%
 X2 <- data2_df %>%
   select(-weather_label)
 
-# Comprobación de las dimensiones de la matriz características
-dimensiones_X2 <- dim(X2)
-print(paste("La Matriz X2 tiene ", dimensiones_X2[1], " filas y ", 
-            dimensiones_X2[2], "columnas"))
-```
-
-```{r}
 # Normalización de los datos de testeo con la media y desviación típica de los
 # datos del período anterior
 Xs_test <- sweep(X2, 2, m_X, "-")
 Xs_test <- sweep(Xs_test, 2, s_X, "/")
-```
 
-```{r}
-# Cuando días T = 1 hay en el segundo período
+# Cuando días T = 2 hay en el segundo período
 dias2_T <- data2_df %>%
   filter(weather_label==T)
 
 # Mostramos el número de días por consola
-print(paste("El número de días con T= 1 en el período 2009-2011 es ", nrow(dias2_T)))
+print(paste("El número de días con T = 2 en el período 2009-2011 es ", nrow(dias2_T)))
 ```
+
+#### Respuesta 6 
+El número de días con T = 2 en el periodo 2009-2011 es 56
 
 ### Paso 7
 Utilizando las *P* primeras componentes principales calculadas anteriormente, 
@@ -261,10 +279,9 @@ Guardar dicha proyección a la variable Xproj_test. Recordar que este subespacio
 tiene dimensión *P* . **Responder**: ¿qué proporción (en porcentaje) de la varianza 
 inicial de los datos explican los datos del subespacio, Xproj_test? ¿Es mayor o 
 menor que la obtenida en el perı́odo 2006-2008?
-
 ```{r}
 # Número de componentes calculados previamente
-P <- 3
+P <- 4
 
 # Extración de P vectores propios
 VEPS_P <- CXs_VPS$vectors[, 1:P]
@@ -307,7 +324,6 @@ módulo. **Calcular** el error de reconstrucción y **responder**: ¿cuál es la
 tı́pica del error de reconstrucción de la temperatura? ¿Creéis que la suposición
 de una distribución estacionaria de los datos es
 correcta?
-
 ```{r}
 # Reconstrucción de la matriz de los datos normalizados desde su proyección
 Xs_rec <- Xproy_test %*% t(VEPS_P)
@@ -330,7 +346,241 @@ print(paste("La desviación estándar de la temperatura es ", round(sd_err_temp,
 if (sd_err_temp < s_X["temperature"]) {
   print("La suposición inicial de una distribución estacionaría parece razonable")
 } else {
-  print("La suposición inicial de una distribución estacionaría no parece razonable")
+  print("La suposición inicial de una distribución estacionaría no " +
+        "parece razonable")
 }
 ```
+
+## Realización de la PEC4 en Python
+Para comprobar los resultados obtenidos en `R` he realizado la práctica en `Python`:
+
+### Paso 0: Importaciones
+```{python}
+# Importaciones necesarias
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+```
+
+### Paso 1: 
+#### Carga de los datos del primer periodo
+```{python}
+# Lectura del fichero
+
+# Ruta relativa al conjunto de datos
+file_path = "./datasets/data_0608.csv"
+
+# Carga del archivo como dataframe
+df = pd.read_csv(file_path)
+
+# Mostramos las primeras filas del dataframe
+print(df)
+```
+
+#### División de los datos
+```{python}
+def division_datos(datos):
+    """
+    Dividimos los datos en las dos matrices que nos pide el ejercicio: Es decir 
+    separamos la primera columna en
+    una nueva matriz y con el resto de columnas creamos una nueva matriz.
+    ---
+    Args:
+        datos(Dataframe): Conjunto de datos que vamos a dividir.
+    Return:
+        y: Matriz con los datos de la primera columna
+        X: Matriz con el resto de los datos
+    """
+    # Separación de la primera columna en el vector y el resto de las columnas 
+    # en la matriz X
+    y = datos.iloc[:, 0] # Primera columna 
+    X = datos.iloc[:, 1:] # Todas las columnas excepto la primera
+
+    return y, X
+
+# División en dos tablas
+y, X = division_datos(df)
+
+# Mostramos las dimensiones de X
+print(f"Las dimensiones de X son : {X.shape}")
+```
+
+### Paso 2: Análisis previo
+```{python}
+def analisis_T(T, y, X):
+  """
+  Función que mostrara el número de días cuyo 'weather_label' es igual a T, y la
+  temperatura media de esos días.
+  ---
+  Args:
+    T (int): Valor del tipo de día que se quiere analizar.
+    y (Dataframe): Conjunto que almacena la columna 'weather_label'.
+    X (Dataframe): Conjunto de datos que almacena el resto de columnas de las 
+    observaciones.
+  """
+  # Obtenemos los indices de los días T
+  indices_T = y[y==T].index
+
+  # Obtenemos las filas correspondientes en X
+  X_T = X.loc[indices_T]
+
+  # Calculamos la temperatura media de los días T
+  temperatura_media = X_T['temperature'].mean()
+
+  # Mostramos los resultados
+  # Número de días en los que 'weather_label' = T
+  print(f"El número de días lluviosos (T=1) es: {len(indices_T)}")
+
+  # Temperatura media en los días T
+  print(f"La temperatura media en los días que T es igual a {T} es " \
+        f"{round(temperatura_media, 2)}")
+
+T = 2
+
+analisis_T(T, y, X)
+```
+
+### Paso 3: Primeras operaciones con el PCA
+```{python}
+# Calculamos la media y la desviación estándar de cada columna
+m_X = X.mean(axis=0) # Media
+s_X = X.std(axis=0, ddof=1) # Desviación estándar (ddof=0 para dividir por n-1)
+
+# Normalizamos la matriz X
+Xs = (X - m_X) / s_X
+
+# Calculamos la temperatura media de los datos normalizados
+temperatura_media_Xs = Xs['temperature'].mean()
+
+# Mostramos los resultados
+print(f"Media de las columnas (m_X) : \n{m_X}")
+print(f"Desviación estándar de las columnas (s_X) : \n{s_X}")
+print(f"Temperatura media de la matriz normalizada : \n{temperatura_media_Xs}")
+```
+
+#### Paso 4 : Matriz de covarianza
+```{python}
+# Calculamos la matriz de covarianza
+# rowvar=False asegura que las columnas sean las variables
+cov_matriz = np.cov(Xs, rowvar=False)  
+
+# Convertimos la matriz de covarianza en un Dataframe para etiquetas claras
+cov_df = pd.DataFrame(cov_matriz, columns=Xs.columns, index=Xs.columns)
+
+# Dibujamos el mapa de calor
+plt.figure(figsize=(10, 8))
+sns.heatmap(cov_df, annot=True, cmap="coolwarm", fmt=".2f", cbar=True)
+plt.title("Matriz de covarianza de las variables normalizadas")
+plt.show()
+
+# Análisis específico de la visibilidad
+# Excluimos visibilidad
+visibilidad_corr = cov_df['visibility'].drop('visibility', errors='ignore') 
+max_corr = visibilidad_corr.abs().idxmax() # Variable más asociada
+min_corr = visibilidad_corr.abs().idxmin() # Variable menos asociada
+
+# Mostramos los resultados
+print(f"Variable más asociada a la visibilidad: {max_corr} (valor absoluto = "\
+      f"{visibilidad_corr[max_corr]:2f})")
+print(f"Variable menos asociada a la visibilidad: {min_corr} (valor  "\
+      f"absoluto = {visibilidad_corr[min_corr]:2f})")
+
+```
+
+### Paso 5
+```{python}
+# Calculamos los valores y vectores propios
+eigen_values, eigen_vectors = np.linalg.eig(cov_matriz)
+
+# Ordenamos los indices de los valores de mayor a menor y ordenamos los VAPS y 
+# VEPS
+sorted_indices = np.argsort(eigen_values)[::-1]
+eigen_values = eigen_values[sorted_indices]
+eigen_vectors = eigen_vectors[:, sorted_indices]
+
+# Calculamos la varianza total explicada y acumulada
+total_varianza = np.sum(eigen_values)
+explicada_varianza = eigen_values / total_varianza
+acumulada_varianza = np.cumsum(explicada_varianza)
+
+# Dibujamos la distribución de la varianza acumulada
+plt.figure(figsize=(10, 6))
+plt.plot(range(1, len(eigen_values) + 1), acumulada_varianza, marker = "o", 
+          linestyle="-")
+plt.axhline(y=0.8, color="red", linestyle="--", label="Umbral 80%")
+plt.xlabel("Componentes principales")
+plt.ylabel("Varianza acumulada")
+plt.title("Varianza acumulada por componente principal")
+plt.grid()
+plt.show()
+
+# Calculamos el mínimo número de componentes principales para explicar E%
+E = 0.8
+componentes_necesarios = np.argmax(acumulada_varianza >= E) + 1
+print(f"Para explicar al menos el {E * 100}% de la varianza,se necesita al "\
+      f"menos {componentes_necesarios} componentes principales")
+```
+
+### Paso 6
+```{python}
+# Comprobar porque los resultados son muy raros.
+# Cargar los datos del período 2009-2011
+file_path2 = "./datasets/data_0911.csv"
+data_test = pd.read_csv(file_path2)
+
+# Repetimos la división
+y_test, X_test = division_datos(data_test)
+
+# Normalizamos los datos del nuevo período usando
+# la media y desviación del anterior dataset
+Xs_test = (X_test - m_X)/s_X
+
+# Mostramos los datos normalizados
+print("Primera filas de la matriz de testeo normalizada")
+print(Xs_test.head())
+
+# Días cuando T = 2: primera salida
+analisis_T(T, y_test, X_test)
+```
+
+### Paso 7
+```{python}
+P = componentes_necesarios
+vectores_principales = eigen_vectors[:,:P]
+
+Xproj_test = Xs_test @ vectores_principales
+
+explicada_varianza_test = np.sum(eigen_values[:P]/np.sum(eigen_values)*100)
+
+explicada_varianza_original = acumulada_varianza[P-1]*100
+
+# Mostramos los resultados
+print(f"La varianza explicada de los datos de testeo para 3 componentes es "\
+      f"{explicada_varianza_test:.2f}%")
+print(f"La varianza explicada de los datos originales para 3 componentes es "\
+      f"{explicada_varianza_original:.2f}%")
+```
+
+### Paso 8
+```{python}
+# Reconstruimos los datos originales desde la proyección
+X_reconstruido = Xproj_test @ vectores_principales.T
+
+# Convertimos Xs_test a numpy array
+Xs_test_values = Xs_test.values
+
+# Calcular el error de reconstrucción
+err_construccion = Xs_test_values - X_reconstruido  # Error en el espacio normalizado
+
+# Extraemos directamente la columna correspondiente al índice de 'temperature'
+err_temperature = err_construccion[0]  # Índice conocido de 'temperature'
+
+# Calculamos la desviación estándar del error para 'temperature'
+std_error_temperature = np.std(err_temperature, ddof=0)
+
+# Mostrar el resultado
+print(f"La desviación típica del error de la temperatura es: {std_error_temperature:.4f}")
+```
+
 
